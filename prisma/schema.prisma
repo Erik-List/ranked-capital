@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApprovalStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum LogType {
+  NEW
+  UPDATE
+  DELETION
+}
+
+model User {
+  id          String   @id @default(uuid())
+  linkedin_url String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  ratings     Rating[]
+}
+
+model Investor {
+  id                String         @id @default(uuid())
+  name             String
+  slug             String         @unique
+  logo_url         String?
+  partners         Json?          // Array of partner names
+  aum              String?        // Using String to allow for approximate values
+  funds_info       Json?          // Array of fund details
+  hq_location      String?
+  other_locations  Json?          // Array of locations
+  investment_stage String?
+  investment_geo   Json?          // Array of regions
+  investment_focus Json?          // Array of focus areas (renamed from technologies)
+  investment_style String?
+  history         String?        // 1-2 sentences background
+  investment_concept String?     // Renamed from approach_concept
+  notable_investments Json?      // Array of investments with notes
+  investor_type    String?
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+  status          ApprovalStatus @default(PENDING_APPROVAL)
+  ratings         Rating[]
+}
+
+model Rating {
+  id                 String         @id @default(uuid())
+  user_id           String
+  investor_id       String
+  score             Json           // Object containing 4 different aspect scores
+  comments          Json           // Object containing comments for each aspect
+  stage_of_company  String?
+  position_of_founder String?
+  status            ApprovalStatus @default(PENDING_APPROVAL)
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
+  logs              Log[]
+  user              User           @relation(fields: [user_id], references: [id])
+  investor          Investor       @relation(fields: [investor_id], references: [id])
+}
+
+model Log {
+  id                String         @id @default(uuid())
+  rating_id         String
+  timestamp         DateTime       @default(now())
+  log_type         LogType
+  log_message      String
+  stage_of_company  String?
+  position_of_founder String?
+  status           ApprovalStatus @default(PENDING_APPROVAL)
+  rating           Rating         @relation(fields: [rating_id], references: [id])
+}
