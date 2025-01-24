@@ -9,17 +9,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockVCs } from '@/lib/mock-data';
+import { mockInvestors } from '@/lib/mock-data';
 import { Building2, Globe2, Briefcase, TrendingUp, Users, Star } from 'lucide-react';
 
 export function generateStaticParams() {
-  return mockVCs.map((investor) => ({
+  return mockInvestors.map((investor) => ({
     slug: investor.slug,
   }));
 }
 
 export default function InvestorProfilePage({ params }: { params: { slug: string } }) {
-  const investor = mockVCs.find(v => v.slug === params.slug);
+  const investor = mockInvestors.find(v => v.slug === params.slug);
 
   if (!investor) {
     notFound();
@@ -39,7 +39,7 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
             <Card>
               <CardHeader className="flex flex-row items-center gap-4">
                 <img
-                  src={investor.logoUrl}
+                  src={investor.logo_url}
                   alt={investor.name}
                   className="w-16 h-16 rounded-lg"
                 />
@@ -47,16 +47,16 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                   <CardTitle className="text-2xl">{investor.name}</CardTitle>
                   <CardDescription className="flex items-center gap-2">
                     <Building2 className="h-4 w-4" />
-                    {investor.hqLocation}
+                    {investor.hq_location}
                   </CardDescription>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2 mb-1">
                     <Star className="h-5 w-5 fill-primary text-primary" />
-                    <span className="text-2xl font-bold">{investor.rating.overall.toFixed(1)}</span>
+                    <span className="text-2xl font-bold">4.5</span>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {investor.rating.totalRatings} ratings
+                    10 ratings
                   </div>
                 </div>
               </CardHeader>
@@ -65,13 +65,13 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                   <div>
                     <h3 className="font-semibold mb-2">About</h3>
                     <p className="text-muted-foreground">{investor.history}</p>
-                    <p className="text-muted-foreground mt-2">{investor.investmentConcept}</p>
+                    <p className="text-muted-foreground mt-2">{investor.investment_concept}</p>
                   </div>
 
                   <div>
                     <h3 className="font-semibold mb-2">Investment Focus</h3>
                     <div className="flex flex-wrap gap-2">
-                      {investor.investmentFocus.map((focus) => (
+                      {investor.investment_focus.map((focus) => (
                         <Badge key={focus} variant="secondary">
                           {focus}
                         </Badge>
@@ -82,11 +82,11 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <h3 className="font-semibold mb-2">Investment Stage</h3>
-                      <p className="text-muted-foreground">{investor.investmentStage}</p>
+                      <p className="text-muted-foreground">{investor.investment_stage}</p>
                     </div>
                     <div>
                       <h3 className="font-semibold mb-2">Investment Style</h3>
-                      <p className="text-muted-foreground">{investor.investmentStyle}</p>
+                      <p className="text-muted-foreground">{investor.investment_style}</p>
                     </div>
                   </div>
 
@@ -95,7 +95,7 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                     <div className="flex items-center gap-2">
                       <Globe2 className="h-4 w-4 text-muted-foreground" />
                       <span className="text-muted-foreground">
-                        {investor.investmentGeo.join(', ')}
+                        {investor.investment_geo.join(', ')}
                       </span>
                     </div>
                   </div>
@@ -104,31 +104,31 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                     <h3 className="font-semibold mb-2">Rating Breakdown</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="text-sm text-muted-foreground mb-1">Integrity & Conviction</div>
+                        <div className="text-sm text-muted-foreground mb-1">Support</div>
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="font-medium">{investor.rating.breakdown.integrity.toFixed(1)}</span>
+                          <span className="font-medium">4.5</span>
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground mb-1">Operational Support</div>
+                        <div className="text-sm text-muted-foreground mb-1">Expertise</div>
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="font-medium">{investor.rating.breakdown.operationalSupport.toFixed(1)}</span>
+                          <span className="font-medium">4.8</span>
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground mb-1">Fundraising Support</div>
+                        <div className="text-sm text-muted-foreground mb-1">Network</div>
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="font-medium">{investor.rating.breakdown.fundraisingSupport.toFixed(1)}</span>
+                          <span className="font-medium">4.3</span>
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground mb-1">Responsiveness</div>
+                        <div className="text-sm text-muted-foreground mb-1">Terms</div>
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="font-medium">{investor.rating.breakdown.responsiveness.toFixed(1)}</span>
+                          <span className="font-medium">4.6</span>
                         </div>
                       </div>
                     </div>
@@ -143,11 +143,11 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {investor.notableInvestments.map((investment, index) => (
+                  {investor.notable_investments.map((investment: { company: string; note: string }, index: number) => (
                     <div key={index} className="flex items-start gap-4">
                       <TrendingUp className="h-5 w-5 text-muted-foreground mt-1" />
                       <div>
-                        <h4 className="font-medium">{investment.name}</h4>
+                        <h4 className="font-medium">{investment.company}</h4>
                         <p className="text-sm text-muted-foreground">
                           {investment.note}
                         </p>
@@ -171,7 +171,7 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                     <div className="text-2xl font-bold">{investor.aum}</div>
                   </div>
                   <div className="space-y-2">
-                    {investor.fundsInfo.map((fund, index) => (
+                    {investor.funds_info.map((fund: { name: string; size: string }, index: number) => (
                       <div key={index} className="flex justify-between items-center">
                         <span className="font-medium">{fund.name}</span>
                         <span className="text-muted-foreground">{fund.size}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,14 +29,15 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
-import { mockVCs } from '@/lib/mock-data';
+import { mockInvestors } from '@/lib/mock-data';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Linkedin, Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 // Define the Investor type based on mockVCs structure
-type Investor = typeof mockVCs[0];
+type Investor = typeof mockInvestors[0];
 
 const formSchema = z.object({
   investorId: z.string().min(1, 'Please select an investor'),
@@ -51,9 +52,70 @@ const formSchema = z.object({
 
 export default function RatePage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedInvestor, setSelectedInvestor] = useState<Investor | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  // Check auth status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/check');
+        if (response.ok) {
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // Check for auth success/error params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success');
+    const error = params.get('error');
+
+    if (success === 'true') {
+      // Trigger profile sync
+      fetch('/api/auth/sync-profile', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error('Failed to sync profile');
+        }
+        const data = await res.json();
+        setIsAuthenticated(true);
+        toast({
+          title: "Successfully authenticated",
+          description: "You can now rate investors",
+        });
+      })
+      .catch((error) => {
+        console.error('Profile sync error:', error);
+        toast({
+          title: "Authentication error",
+          description: "Please try again",
+          variant: "destructive",
+        });
+      });
+    } else if (error) {
+      toast({
+        title: "Authentication failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+    // Clean up URL params
+    if (params.has('success') || params.has('error')) {
+      window.history.replaceState({}, '', '/rate');
+    }
+  }, [toast]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,12 +128,27 @@ export default function RatePage() {
     },
   });
 
-  const filteredInvestors = mockVCs.filter(investor =>
+  const filteredInvestors = mockInvestors.filter(investor =>
     investor.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleLinkedInAuth = () => {
-    setIsAuthenticated(true);
+  const handleLinkedInAuth = async () => {
+    try {
+      setIsAuthenticating(true);
+      const response = await fetch('/api/auth/linkedin');
+      const { url } = await response.json();
+      
+      // Full page redirect instead of popup
+      window.location.href = url;
+    } catch (error) {
+      console.error('Error initiating auth:', error);
+      toast({
+        title: "Authentication failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
+      setIsAuthenticating(false);
+    }
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
@@ -89,8 +166,8 @@ export default function RatePage() {
     const newLog = {
       id: Date.now(), // Use timestamp as temporary ID
       timestamp: new Date().toISOString(),
-      stageOfCompany: values.stageOfCompany,
-      positionOfFounder: values.positionOfFounder,
+      stage_of_company: values.stageOfCompany,
+      position_of_founder: values.positionOfFounder,
       approvalStatus: 'pending',
       logMessage: `New rating submitted for ${selectedInvestor.name}`,
     };
@@ -101,11 +178,10 @@ export default function RatePage() {
     // Update investor ratings
     const updatedRating = {
       overall: overallRating,
-      totalRatings: selectedInvestor.rating.totalRatings + 1,
       breakdown: {
         integrity: values.integrityScore,
-        operationalSupport: values.operationalSupportScore,
-        fundraisingSupport: values.fundraisingSupportScore,
+        operational_support: values.operationalSupportScore,
+        fundraising_support: values.fundraisingSupportScore,
         responsiveness: values.responsivenessScore,
       },
     };
@@ -135,10 +211,15 @@ export default function RatePage() {
                 variant={isAuthenticated ? "secondary" : "default"}
                 className="w-full"
                 size="lg"
-                disabled={isAuthenticated}
+                disabled={isAuthenticated || isAuthenticating}
               >
                 <Linkedin className="mr-2 h-5 w-5" />
-                {isAuthenticated ? "Authenticated with LinkedIn" : "Continue with LinkedIn"}
+                {isAuthenticated 
+                  ? "Authenticated with LinkedIn"
+                  : isAuthenticating 
+                    ? "Authenticating..."
+                    : "Continue with LinkedIn"
+                }
               </Button>
             </CardContent>
           </Card>
@@ -174,14 +255,14 @@ export default function RatePage() {
                       }}
                     >
                       <img
-                        src={investor.logoUrl}
+                        src={investor.logo_url}
                         alt={investor.name}
                         className="w-8 h-8 rounded-full"
                       />
                       <div>
                         <div className="font-medium">{investor.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {investor.hqLocation}
+                          {investor.hq_location}
                         </div>
                       </div>
                     </div>

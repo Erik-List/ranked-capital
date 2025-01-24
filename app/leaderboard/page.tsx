@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { mockVCs } from '@/lib/mock-data';
+import { mockInvestors } from '@/lib/mock-data';
 import { Search, ArrowUpDown, TrendingUp, TrendingDown, Star } from 'lucide-react';
 
 export default function LeaderboardPage() {
@@ -28,12 +28,12 @@ export default function LeaderboardPage() {
   const [stage, setStage] = useState('all');
   const [geography, setGeography] = useState('all');
 
-  const filteredInvestors = mockVCs
+  const filteredInvestors = mockInvestors
     .filter(investor => {
-      if (stage !== 'all' && !investor.investmentStage.toLowerCase().includes(stage)) {
+      if (stage !== 'all' && !investor.investment_stage.toLowerCase().includes(stage)) {
         return false;
       }
-      if (geography !== 'all' && !investor.investmentGeo.some(geo => 
+      if (geography !== 'all' && !investor.investment_geo.some(geo => 
         geo.toLowerCase().includes(geography.toLowerCase())
       )) {
         return false;
@@ -42,13 +42,14 @@ export default function LeaderboardPage() {
         const query = searchQuery.toLowerCase();
         return (
           investor.name.toLowerCase().includes(query) ||
-          investor.hqLocation.toLowerCase().includes(query) ||
-          investor.investmentFocus.some(focus => focus.toLowerCase().includes(query))
+          investor.hq_location.toLowerCase().includes(query) ||
+          investor.investment_focus.some(focus => focus.toLowerCase().includes(query))
         );
       }
       return true;
     })
-    .sort((a, b) => b.rating.overall - a.rating.overall);
+    // Temporarily sort by name since we don't have ratings yet
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,7 +119,7 @@ export default function LeaderboardPage() {
                 <TableHead>Rating</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Stage</TableHead>
-                <TableHead>Last Investment</TableHead>
+                <TableHead>Notable Investment</TableHead>
                 <TableHead>Style</TableHead>
                 <TableHead className="text-right">AUM</TableHead>
               </TableRow>
@@ -142,7 +143,7 @@ export default function LeaderboardPage() {
                       className="flex items-center gap-3 hover:text-primary"
                     >
                       <img
-                        src={investor.logoUrl}
+                        src={investor.logo_url}
                         alt={investor.name}
                         className="w-8 h-8 rounded-full"
                       />
@@ -152,23 +153,23 @@ export default function LeaderboardPage() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Star className="h-4 w-4 fill-primary text-primary" />
-                      <span className="font-medium">{investor.rating.overall.toFixed(1)}</span>
+                      <span className="font-medium">4.5</span>
                       <span className="text-sm text-muted-foreground">
-                        ({investor.rating.totalRatings})
+                        (10)
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>{investor.hqLocation}</TableCell>
-                  <TableCell>{investor.investmentStage}</TableCell>
+                  <TableCell>{investor.hq_location}</TableCell>
+                  <TableCell>{investor.investment_stage}</TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <div>{investor.lastInvestment.company}</div>
+                      <div>{investor.notable_investments[0]?.company || 'N/A'}</div>
                       <div className="text-muted-foreground">
-                        {investor.lastInvestment.stage} • {investor.lastInvestment.amount}
+                        {investor.notable_investments[0]?.note || 'N/A'}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{investor.investmentStyle}</TableCell>
+                  <TableCell>{investor.investment_style}</TableCell>
                   <TableCell className="text-right">{investor.aum}</TableCell>
                 </TableRow>
               ))}
