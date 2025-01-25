@@ -39,10 +39,10 @@ export default function LogsPage() {
 
   const filteredLogs = logs
     .filter(log => {
-      if (stageFilter !== 'all' && log.stageOfCompany !== stageFilter) {
+      if (stageFilter !== 'all' && log.stage_of_company !== stageFilter) {
         return false;
       }
-      if (positionFilter !== 'all' && log.positionOfFounder !== positionFilter) {
+      if (positionFilter !== 'all' && log.position_of_founder !== positionFilter) {
         return false;
       }
       return true;
@@ -105,18 +105,18 @@ export default function LogsPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {log.stageOfCompany}
+                      {log.stage_of_company}
                     </Badge>
                   </TableCell>
-                  <TableCell>{log.positionOfFounder}</TableCell>
+                  <TableCell>{log.position_of_founder}</TableCell>
                   <TableCell>
                     <Badge 
-                      variant={log.approvalStatus === 'approved' ? 'default' : 'secondary'}
+                      variant={log.status === 'APPROVED' ? 'default' : 'secondary'}
                     >
-                      {log.approvalStatus}
+                      {log.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{log.logMessage}</TableCell>
+                  <TableCell>{log.log_message}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
