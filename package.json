@@ -7,10 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node --project prisma/tsconfig.json -r tsconfig-paths/register prisma/seed.ts"
-  },
-  "prisma": {
-    "seed": "ts-node --project prisma/tsconfig.json -r tsconfig-paths/register prisma/seed.ts"
+    "types:supabase": "npx supabase gen types typescript --project-id lsohkkmdlrlixukuncjl > types/supabase.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -79,7 +76,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.7",
-    "supabase": "^2.9.6",
+    "supabase": "^2.12.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3"

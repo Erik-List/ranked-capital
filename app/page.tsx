@@ -4,42 +4,31 @@ import { Search, Shield, Star } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
-import { Log } from '@/types/supabase';
+import type { Database } from '@/types/supabase';
 
-async function getLatestActivity(): Promise<Log | null> {
+type RatingWithRelations = Database['public']['Tables']['Rating']['Row'];
+
+async function getLatestActivities(): Promise<RatingWithRelations[]> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
   
   const { data, error } = await supabase
-    .from('Log')
-    .select(`
-      *,
-      rating:Rating (
-        created_at,
-        stage_of_company,
-        position_of_founder
-      )
-    `)
-    .eq('status', 'approved')
-    .order('timestamp', { ascending: false })
-    .limit(1)
-    .single();
+    .from('Rating')
+    .select()
+    .eq('status', 'APPROVED')
+    .order('created_at', { ascending: false })
+    .limit(5);
 
   if (error) {
-    console.error('Error fetching latest activity:', error);
-    return null;
+    console.error('Error fetching latest activities:', error);
+    return [];
   }
 
-  return {
-    ...data,
-    stage_of_company: data.rating.stage_of_company,
-    position_of_founder: data.rating.position_of_founder,
-    rating_created_at: data.rating.created_at
-  };
+  return data || [];
 }
 
 export default async function Home() {
-  const latestActivity = await getLatestActivity();
+  const latestActivities = await getLatestActivities();
 
   return (
     <div className="min-h-screen bg-background">
@@ -103,20 +92,24 @@ export default async function Home() {
             <h2 className="text-3xl font-bold text-center mb-12">Latest Activity</h2>
             <div className="max-w-2xl mx-auto">
               <div className="space-y-4">
-                {latestActivity ? (
-                  <div className="p-4 rounded-lg border">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          {latestActivity.stage_of_company} Stage • {latestActivity.position_of_founder}
-                        </p>
-                        <p className="font-medium">New rating submitted</p>
+                {latestActivities.length > 0 ? (
+                  latestActivities.map((activity) => (
+                    <div key={activity.id} className="p-4 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            {activity.stage_of_company} Stage • {activity.position_of_founder}
+                          </p>
+                          <p className="font-medium">
+                            {activity.rating_type === 'NEW' ? 'New rating' : 'Updated rating'} submitted
+                          </p>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                        </span>
                       </div>
-                      <span className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(latestActivity.timestamp), { addSuffix: true })}
-                      </span>
                     </div>
-                  </div>
+                  ))
                 ) : (
                   <div className="text-center text-muted-foreground">
                     No activity to show yet

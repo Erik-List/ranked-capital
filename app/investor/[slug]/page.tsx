@@ -9,21 +9,50 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockInvestors } from '@/lib/mock-data';
 import { Building2, Globe2, Briefcase, TrendingUp, Users, Star } from 'lucide-react';
+import { createClient } from '@/utils/supabase/server';
+import { cookies } from 'next/headers';
+import type { Database } from '@/types/supabase';
 
-export function generateStaticParams() {
-  return mockInvestors.map((investor) => ({
-    slug: investor.slug,
-  }));
+type Investor = Database['public']['Tables']['Investor']['Row'];
+
+async function getInvestor(slug: string): Promise<Investor | null> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data, error } = await supabase
+    .from('Investor')
+    .select()
+    .eq('status', 'APPROVED')
+    .eq('slug', slug)
+    .single();
+
+  if (error) {
+    console.error('Error fetching investor:', error);
+    return null;
+  }
+
+  return data;
 }
 
-export default function InvestorProfilePage({ params }: { params: { slug: string } }) {
-  const investor = mockInvestors.find(v => v.slug === params.slug);
+export default async function InvestorProfilePage({ params }: { params: { slug: string } }) {
+  const investor = await getInvestor(params.slug);
 
   if (!investor) {
     notFound();
   }
+
+  // Hardcoded data that isn't in DB yet
+  const mockRatings = {
+    overall: 4.5,
+    count: 10,
+    breakdown: {
+      support: 4.5,
+      expertise: 4.8,
+      network: 4.3,
+      terms: 4.6
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,11 +67,13 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
           <div className="md:col-span-2 space-y-6">
             <Card>
               <CardHeader className="flex flex-row items-center gap-4">
-                <img
-                  src={investor.logo_url}
-                  alt={investor.name}
-                  className="w-16 h-16 rounded-lg"
-                />
+                {investor.logo_url && (
+                  <img
+                    src={investor.logo_url}
+                    alt={investor.name}
+                    className="w-16 h-16 rounded-lg"
+                  />
+                )}
                 <div className="flex-1">
                   <CardTitle className="text-2xl">{investor.name}</CardTitle>
                   <CardDescription className="flex items-center gap-2">
@@ -53,10 +84,10 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                 <div className="text-right">
                   <div className="flex items-center gap-2 mb-1">
                     <Star className="h-5 w-5 fill-primary text-primary" />
-                    <span className="text-2xl font-bold">4.5</span>
+                    <span className="text-2xl font-bold">{mockRatings.overall}</span>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    10 ratings
+                    {mockRatings.count} ratings
                   </div>
                 </div>
               </CardHeader>
@@ -68,16 +99,18 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                     <p className="text-muted-foreground mt-2">{investor.investment_concept}</p>
                   </div>
 
-                  <div>
-                    <h3 className="font-semibold mb-2">Investment Focus</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {investor.investment_focus.map((focus) => (
-                        <Badge key={focus} variant="secondary">
-                          {focus}
-                        </Badge>
-                      ))}
+                  {investor.investment_focus && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Investment Focus</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {(investor.investment_focus as string[]).map((focus) => (
+                          <Badge key={focus} variant="secondary">
+                            {focus}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
@@ -90,15 +123,17 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                     </div>
                   </div>
 
-                  <div>
-                    <h3 className="font-semibold mb-2">Geographic Focus</h3>
-                    <div className="flex items-center gap-2">
-                      <Globe2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {investor.investment_geo.join(', ')}
-                      </span>
+                  {investor.investment_geo && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Geographic Focus</h3>
+                      <div className="flex items-center gap-2">
+                        <Globe2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          {(investor.investment_geo as string[]).join(', ')}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div>
                     <h3 className="font-semibold mb-2">Rating Breakdown</h3>
@@ -107,28 +142,28 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                         <div className="text-sm text-muted-foreground mb-1">Support</div>
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="font-medium">4.5</span>
+                          <span className="font-medium">{mockRatings.breakdown.support}</span>
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-muted-foreground mb-1">Expertise</div>
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="font-medium">4.8</span>
+                          <span className="font-medium">{mockRatings.breakdown.expertise}</span>
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-muted-foreground mb-1">Network</div>
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="font-medium">4.3</span>
+                          <span className="font-medium">{mockRatings.breakdown.network}</span>
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-muted-foreground mb-1">Terms</div>
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="font-medium">4.6</span>
+                          <span className="font-medium">{mockRatings.breakdown.terms}</span>
                         </div>
                       </div>
                     </div>
@@ -137,26 +172,28 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Notable Investments</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {investor.notable_investments.map((investment: { company: string; note: string }, index: number) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <TrendingUp className="h-5 w-5 text-muted-foreground mt-1" />
-                      <div>
-                        <h4 className="font-medium">{investment.company}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {investment.note}
-                        </p>
+            {investor.notable_investments && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">Notable Investments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {(investor.notable_investments as Array<{ company: string; note: string }>).map((investment, index) => (
+                      <div key={index} className="flex items-start gap-4">
+                        <TrendingUp className="h-5 w-5 text-muted-foreground mt-1" />
+                        <div>
+                          <h4 className="font-medium">{investment.company}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {investment.note}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -170,33 +207,37 @@ export default function InvestorProfilePage({ params }: { params: { slug: string
                     <div className="text-sm text-muted-foreground">Assets Under Management</div>
                     <div className="text-2xl font-bold">{investor.aum}</div>
                   </div>
-                  <div className="space-y-2">
-                    {investor.funds_info.map((fund: { name: string; size: string }, index: number) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <span className="font-medium">{fund.name}</span>
-                        <span className="text-muted-foreground">{fund.size}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {investor.funds_info && (
+                    <div className="space-y-2">
+                      {(investor.funds_info as Array<{ name: string; size: string }>).map((fund, index) => (
+                        <div key={index} className="flex justify-between items-center">
+                          <span className="font-medium">{fund.name}</span>
+                          <span className="text-muted-foreground">{fund.size}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Partners</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {investor.partners.map((partner, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <Users className="h-5 w-5 text-muted-foreground" />
-                      <span>{partner}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {investor.partners && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Key Partners</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {(investor.partners as string[]).map((partner, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <Users className="h-5 w-5 text-muted-foreground" />
+                        <span>{partner}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Button asChild className="w-full" size="lg">
               <Link href="/rate">Rate this Investor</Link>
